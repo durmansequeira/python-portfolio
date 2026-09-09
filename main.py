@@ -1,22 +1,13 @@
 import subprocess
 import csv
-#List of hosts to ping
+import json
 
-devices = [
-    {
-        "name": "R1",
-        "ip": "127.0.0.1"
-    },
-    {
-        "name": "R2",
-        "ip": "8.8.8.8"
-    },
-    {
-        "name": "SW1",
-        "ip": "192.0.2.1"
-    }
-]
+#Load devices from JSON file
+def load_devices():
+    with open("devices.json", "r") as file:
+        devices = json.load(file)
 
+    return devices
 #definition of the ping_host function
       
 def ping_host(target):
@@ -59,9 +50,11 @@ def assess_health(packet_loss, average_latency):
             return "Warning"
         else:
             return "Critical"
-    
+        
+        
+devices = load_devices()
 #store dignostic results
-    
+
 results = []    
 
 #Check every device 
@@ -151,4 +144,4 @@ with open("network_report.csv", "w", newline="") as file:
 
 print("\nReport saved to network_report.csv")
 
-print("=" * 70)    
+print("=" * 70)     
