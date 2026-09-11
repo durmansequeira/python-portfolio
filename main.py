@@ -3,6 +3,7 @@ import csv
 import json
 import sys
 import ipaddress
+import re
 
 
 # Load device configuration from JSON
@@ -72,35 +73,57 @@ def validate_devices(devices):
     return True
 
 
-# Definition of the ping_host function
+# Parse Windows ping output
+def parse_ping_output(output):
+
+    packet_loss = None
+    average_latency = None
+
+    # Search for packet loss percentage
+    packet_loss_match = re.search(
+        r"Lost\s*=\s*\d+\s*\((\d+)%\s*loss\)",
+        output,
+        re.IGNORECASE
+    )
+
+    if packet_loss_match:
+        packet_loss = int(packet_loss_match.group(1))
+
+    # Search for average latency
+    latency_match = re.search(
+        r"Average\s*=\s*(\d+)ms",
+        output,
+        re.IGNORECASE
+    )
+
+    if latency_match:
+        average_latency = int(latency_match.group(1))
+
+    return packet_loss, average_latency
+
+
+# Execute ping command
 def ping_host(target):
 
     try:
         result = subprocess.run(
-            ["ping", target],
+            ["ping", "-n", "4", "-w", "1000", target],
             capture_output=True,
             text=True,
             timeout=10
         )
 
-        # Check whether hostname could be resolved or not
-        if "could not find host" in result.stdout.lower():
+        output = result.stdout
+
+        # Check whether hostname could be resolved
+        if "could not find host" in output.lower():
             return "Host_not_found", None, None
 
-        packet_loss = None
-        average_latency = None
+        packet_loss, average_latency = parse_ping_output(output)
 
-        for line in result.stdout.splitlines():
-
-            if "Lost =" in line:
-                parts = line.split()
-                packet_loss = int(parts[10].strip("(%"))
-
-            if "Average =" in line:
-                parts = line.split()
-                average_latency = int(
-                    parts[-1].replace("ms", "")
-                )
+        # Make sure the expected information was actually found
+        if packet_loss is None:
+            return "PARSE_ERROR", None, None
 
         return result.returncode, packet_loss, average_latency
 
@@ -111,10 +134,15 @@ def ping_host(target):
 # Assess network health
 def assess_health(packet_loss, average_latency):
 
-    if packet_loss == 0 and average_latency < 100:
+    if packet_loss == 0 and average_latency is not None and average_latency < 100:
         return "Healthy"
 
-    elif packet_loss < 50 and average_latency < 200:
+    elif (
+        packet_loss is not None
+        and packet_loss < 50
+        and average_latency is not None
+        and average_latency < 200
+    ):
         return "Warning"
 
     else:
@@ -180,6 +208,19 @@ for device in devices:
             "health": None
         })
 
+    elif status == "PARSE_ERROR":
+
+        print("ERROR: Could not interpret the ping output.")
+
+        results.append({
+            "name": device["name"],
+            "ip": device["ip"],
+            "status": "PARSE_ERROR",
+            "packet_loss": None,
+            "average_latency": None,
+            "health": None
+        })
+
     elif status == 0:
 
         health = assess_health(
@@ -209,8 +250,8 @@ for device in devices:
             "name": device["name"],
             "ip": device["ip"],
             "status": "DOWN",
-            "packet_loss": None,
-            "average_latency": None,
+            "packet_loss": packet_loss,
+            "average_latency": average_latency,
             "health": None
         })
 
