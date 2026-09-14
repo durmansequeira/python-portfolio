@@ -117,7 +117,6 @@ def parse_ping_output(output):
     packet_loss = None
     average_latency = None
 
-    # Search for packet loss percentage
     packet_loss_match = re.search(
         r"Lost\s*=\s*\d+\s*\((\d+)%\s*loss\)",
         output,
@@ -127,7 +126,6 @@ def parse_ping_output(output):
     if packet_loss_match:
         packet_loss = int(packet_loss_match.group(1))
 
-    # Search for average latency
     latency_match = re.search(
         r"Average\s*=\s*(\d+)ms",
         output,
@@ -155,14 +153,12 @@ def ping_host(target):
 
         output = result.stdout
 
-        # Check whether hostname could be resolved
         if "could not find host" in output.lower():
             logger.warning(f"Host could not be resolved: {target}")
             return "Host_not_found", None, None
 
         packet_loss, average_latency = parse_ping_output(output)
 
-        # Make sure the expected information was actually found
         if packet_loss is None:
             logger.error(
                 f"Could not parse packet loss from ping output for {target}."
@@ -205,177 +201,183 @@ def assess_health(packet_loss, average_latency):
         return "Critical"
 
 
-# Load devices from configuration file
-devices = load_devices()
+# Main program
+def main():
 
+    # Load devices
+    devices = load_devices()
 
-# Stop the program if the configuration could not be loaded
-if devices is None:
-    print(
-        "Program stopped because the device configuration "
-        "could not be loaded."
-    )
-    logger.critical("Program stopped: configuration could not be loaded.")
-    sys.exit(1)
+    if devices is None:
+        print(
+            "Program stopped because the device configuration "
+            "could not be loaded."
+        )
+        logger.critical(
+            "Program stopped: configuration could not be loaded."
+        )
+        return 1
 
+    # Validate devices
+    if not validate_devices(devices):
+        print(
+            "Program stopped because the device configuration "
+            "is invalid."
+        )
+        logger.critical(
+            "Program stopped: device configuration is invalid."
+        )
+        return 1
 
-# Validate the device configuration
-if not validate_devices(devices):
-    print(
-        "Program stopped because the device configuration "
-        "is invalid."
-    )
-    logger.critical("Program stopped: device configuration is invalid.")
-    sys.exit(1)
+    # Store diagnostic results
+    results = []
 
+    # Check every device
+    for device in devices:
 
-# Store diagnostic results
-results = []
+        name = device["name"]
+        ip = device["ip"]
 
+        print(f"\nChecking {name} ({ip})")
+        logger.info(f"Checking device: {name} ({ip})")
 
-# Check every device
-for device in devices:
+        status, packet_loss, average_latency = ping_host(ip)
 
-    name = device["name"]
-    ip = device["ip"]
+        if status == "Host_not_found":
 
-    print(f"\nChecking {name} ({ip})")
-    logger.info(f"Checking device: {name} ({ip})")
+            print(f"{name} could not be resolved.")
+            logger.warning(f"{name} could not be resolved.")
 
-    status, packet_loss, average_latency = ping_host(ip)
+            results.append({
+                "name": name,
+                "ip": ip,
+                "status": "Host_not_found",
+                "packet_loss": None,
+                "average_latency": None,
+                "health": None
+            })
 
-    if status == "Host_not_found":
+        elif status == "TIMEOUT":
 
-        print(f"{name} could not be resolved.")
-        logger.warning(f"{name} could not be resolved.")
+            print("Request timed out.")
+            logger.warning(f"Request timed out for {name}.")
 
-        results.append({
-            "name": name,
-            "ip": ip,
-            "status": "Host_not_found",
-            "packet_loss": None,
-            "average_latency": None,
-            "health": None
-        })
+            results.append({
+                "name": name,
+                "ip": ip,
+                "status": "TIMEOUT",
+                "packet_loss": None,
+                "average_latency": None,
+                "health": None
+            })
 
-    elif status == "TIMEOUT":
+        elif status == "PARSE_ERROR":
 
-        print("Request timed out.")
-        logger.warning(f"Request timed out for {name}.")
+            print("ERROR: Could not interpret the ping output.")
+            logger.error(f"Ping output parsing failed for {name}.")
 
-        results.append({
-            "name": name,
-            "ip": ip,
-            "status": "TIMEOUT",
-            "packet_loss": None,
-            "average_latency": None,
-            "health": None
-        })
+            results.append({
+                "name": name,
+                "ip": ip,
+                "status": "PARSE_ERROR",
+                "packet_loss": None,
+                "average_latency": None,
+                "health": None
+            })
 
-    elif status == "PARSE_ERROR":
+        elif status == 0:
 
-        print("ERROR: Could not interpret the ping output.")
-        logger.error(f"Ping output parsing failed for {name}.")
+            health = assess_health(
+                packet_loss,
+                average_latency
+            )
 
-        results.append({
-            "name": name,
-            "ip": ip,
-            "status": "PARSE_ERROR",
-            "packet_loss": None,
-            "average_latency": None,
-            "health": None
-        })
+            print(f"{name} is UP")
+            print(f"Packet loss: {packet_loss}%")
+            print(f"Average latency: {average_latency} ms")
+            print(f"Health status: {health}")
 
-    elif status == 0:
+            logger.info(
+                f"{name} is UP. "
+                f"Packet loss: {packet_loss}%, "
+                f"Average latency: {average_latency} ms, "
+                f"Health: {health}"
+            )
 
-        health = assess_health(
-            packet_loss,
-            average_latency
+            results.append({
+                "name": name,
+                "ip": ip,
+                "status": "UP",
+                "packet_loss": packet_loss,
+                "average_latency": average_latency,
+                "health": health
+            })
+
+        else:
+
+            print(f"{name} is DOWN")
+            logger.warning(
+                f"{name} is DOWN. Return code: {status}"
+            )
+
+            results.append({
+                "name": name,
+                "ip": ip,
+                "status": "DOWN",
+                "packet_loss": packet_loss,
+                "average_latency": average_latency,
+                "health": None
+            })
+
+    # Display report
+    print("\n" + "=" * 70)
+    print("NOC NETWORK REPORT")
+    print("=" * 70)
+
+    for result in results:
+
+        print(
+            f"{result['name']:<15}"
+            f"{result['ip']:<16}"
+            f"{result['status']:<15}"
+            f"{str(result['packet_loss']):<12}"
+            f"{str(result['average_latency']):<12}"
+            f"{str(result['health']):<10}"
         )
 
-        print(f"{name} is UP")
-        print(f"Packet loss: {packet_loss}%")
-        print(f"Average latency: {average_latency} ms")
-        print(f"Health status: {health}")
+    # Save CSV report
+    try:
 
-        logger.info(
-            f"{name} is UP. "
-            f"Packet loss: {packet_loss}%, "
-            f"Average latency: {average_latency} ms, "
-            f"Health: {health}"
-        )
+        with open("network_report.csv", "w", newline="") as file:
 
-        results.append({
-            "name": name,
-            "ip": ip,
-            "status": "UP",
-            "packet_loss": packet_loss,
-            "average_latency": average_latency,
-            "health": health
-        })
+            writer = csv.DictWriter(
+                file,
+                fieldnames=[
+                    "name",
+                    "ip",
+                    "status",
+                    "packet_loss",
+                    "average_latency",
+                    "health"
+                ]
+            )
 
-    else:
+            writer.writeheader()
+            writer.writerows(results)
 
-        print(f"{name} is DOWN")
-        logger.warning(
-            f"{name} is DOWN. Return code: {status}"
-        )
+        logger.info("Network report saved successfully.")
+        print("\nReport saved to network_report.csv")
 
-        results.append({
-            "name": name,
-            "ip": ip,
-            "status": "DOWN",
-            "packet_loss": packet_loss,
-            "average_latency": average_latency,
-            "health": None
-        })
+    except OSError as error:
+
+        logger.error(f"Could not save network report: {error}")
+        print(f"\nERROR: Could not save network report: {error}")
+
+    logger.info("Network diagnostic program completed.")
+    print("=" * 70)
+
+    return 0
 
 
-# Display stored results
-print("\n" + "=" * 70)
-print("NOC NETWORK REPORT")
-print("=" * 70)
-
-for result in results:
-
-    print(
-        f"{result['name']:<15}"
-        f"{result['ip']:<16}"
-        f"{result['status']:<15}"
-        f"{str(result['packet_loss']):<12}"
-        f"{str(result['average_latency']):<12}"
-        f"{str(result['health']):<10}"
-    )
-
-
-# Save results to CSV
-try:
-
-    with open("network_report.csv", "w", newline="") as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=[
-                "name",
-                "ip",
-                "status",
-                "packet_loss",
-                "average_latency",
-                "health"
-            ]
-        )
-
-        writer.writeheader()
-        writer.writerows(results)
-
-    logger.info("Network report saved successfully.")
-    print("\nReport saved to network_report.csv")
-
-except OSError as error:
-
-    logger.error(f"Could not save network report: {error}")
-    print(f"\nERROR: Could not save network report: {error}")
-
-
-logger.info("Network diagnostic program completed.")
-print("=" * 70)
+# Run the program only when this file is executed directly
+if __name__ == "__main__":
+    sys.exit(main())
