@@ -1,2 +1,3 @@
 network_report.csv
 network_diagnostics.log
+__pycache__/
