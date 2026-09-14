@@ -34,3 +34,27 @@
 2026-09-13 21:57:55,190 | WARNING | Test Device  is DOWN. Return code: 1
 2026-09-13 21:57:55,196 | INFO | Network report saved successfully.
 2026-09-13 21:57:55,197 | INFO | Network diagnostic program completed.
+2026-09-13 22:45:16,060 | INFO | Validating device configuration.
+2026-09-13 22:45:16,061 | ERROR | Device configuration is empty.
+2026-09-13 22:45:16,061 | INFO | Validating device configuration.
+2026-09-13 22:45:16,062 | ERROR | Invalid IP address for Router: hello
+2026-09-13 22:45:16,062 | INFO | Validating device configuration.
+2026-09-13 22:45:16,062 | ERROR | A device is missing the 'ip' field.
+2026-09-13 22:45:16,062 | INFO | Validating device configuration.
+2026-09-13 22:45:16,063 | INFO | Device configuration validated successfully. 1 device(s) found.
+2026-09-13 22:45:52,184 | INFO | Validating device configuration.
+2026-09-13 22:45:52,185 | ERROR | Device configuration is empty.
+2026-09-13 22:45:52,186 | INFO | Validating device configuration.
+2026-09-13 22:45:52,186 | ERROR | Invalid IP address for Router: hello
+2026-09-13 22:45:52,187 | INFO | Validating device configuration.
+2026-09-13 22:45:52,187 | ERROR | A device is missing the 'ip' field.
+2026-09-13 22:45:52,187 | INFO | Validating device configuration.
+2026-09-13 22:45:52,188 | INFO | Device configuration validated successfully. 1 device(s) found.
+2026-09-14 12:59:26,033 | INFO | Validating device configuration.
+2026-09-14 12:59:26,034 | ERROR | Device configuration is empty.
+2026-09-14 12:59:26,036 | INFO | Validating device configuration.
+2026-09-14 12:59:26,036 | ERROR | Invalid IP address for Router: hello
+2026-09-14 12:59:26,037 | INFO | Validating device configuration.
+2026-09-14 12:59:26,038 | ERROR | A device is missing the 'ip' field.
+2026-09-14 12:59:26,039 | INFO | Validating device configuration.
+2026-09-14 12:59:26,039 | INFO | Device configuration validated successfully. 1 device(s) found.
