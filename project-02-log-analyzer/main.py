@@ -268,9 +268,16 @@ def export_health_summary_to_csv(health_summary, output_file):
 
     try:
 
-        with output_path.open("w", newline="", encoding="utf-8") as file:
+        with output_path.open(
+            "w",
+            newline="",
+            encoding="utf-8"
+            ) as file:
 
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer = csv.DictWriter(
+                    file,
+                    fieldnames=fieldnames
+                    )
 
                 writer.writeheader()
                 writer.writerows(health_summary)
@@ -296,7 +303,7 @@ def main():
     )
 
     report_file = (
-        project_directory/ "network_health_report.csv"
+        project_directory / "network_health_report.csv"
     )
 
     entries = load_log_file(log_file)
