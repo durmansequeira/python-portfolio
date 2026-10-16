@@ -165,7 +165,7 @@ This project created the foundation for the rest of the portfolio.
 
 ## Project 2 — Log Analyzer
 
-**Status: In progress**
+**Status: Completed**
 
 The second project will build directly on Project 1.
 
