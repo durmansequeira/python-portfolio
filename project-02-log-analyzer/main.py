@@ -268,7 +268,7 @@ def export_health_summary_to_csv(health_summary, output_file):
 
     try:
 
-        with output_path.open(output_file, "w", newline="", encoding="utf-8") as file:
+        with output_path.open("w", newline="", encoding="utf-8") as file:
 
                 writer = csv.DictWriter(file, fieldnames=fieldnames)
 
