@@ -421,7 +421,9 @@ class TestExportHealthReport(unittest.TestCase):
                 self.assertEqual(rows[1]["health"], "Critical")
 
                 # CSV represents Python's None value as an empty field.
-                self.assertEqual(rows[1]["average_latency"], "")
+                self.assertEqual(rows[1]["average_latency"], "N/A")
+
+                self.assertIsNone(health_summary[1]["average_latency"])
 
 if __name__ == "__main__":
     unittest.main()

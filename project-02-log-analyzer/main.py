@@ -266,6 +266,16 @@ def export_health_summary_to_csv(health_summary, output_file):
     # Normalize the destination into a path object.
     output_path = Path(output_file)
 
+    # Prepare a separate copy for the CSV report.
+    # Keep the original health_summary unchanged.
+    rows_for_export = []
+    for record in health_summary:
+        export_record = record.copy()
+        if export_record["average_latency"] is None:
+            export_record["average_latency"] = "N/A"
+
+        rows_for_export.append(export_record)
+
     try:
 
         with output_path.open(
@@ -280,7 +290,7 @@ def export_health_summary_to_csv(health_summary, output_file):
                     )
 
                 writer.writeheader()
-                writer.writerows(health_summary)
+                writer.writerows(rows_for_export)
 
         # Only report success after writing has completed.
 
