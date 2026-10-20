@@ -473,7 +473,7 @@ That story is more important to me than simply having a list of technologies on 
 
 ```text
 ✅ Project 1 — Network Diagnostic Tool
-🚧 Project 2 — Log Analyzer
+✅Project 2 — Log Analyzer
 ⬜ Project 3 — SSH Network Automation
 ⬜ Project 4 — Network Monitoring Tool
 ⬜ Project 5 — REST API / Automation
