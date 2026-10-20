@@ -420,9 +420,9 @@ class TestExportHealthReport(unittest.TestCase):
                 self.assertEqual(rows[1]["packet_loss"], "100")
                 self.assertEqual(rows[1]["health"], "Critical")
 
-                # CSV represents Python's None value as an empty field.
+                # The CSV report displays missing latency as "N/A".
                 self.assertEqual(rows[1]["average_latency"], "N/A")
-
+                # Exporting must not modify the original analysis data.
                 self.assertIsNone(health_summary[1]["average_latency"])
 
 if __name__ == "__main__":

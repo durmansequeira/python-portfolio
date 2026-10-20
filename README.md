@@ -167,38 +167,29 @@ This project created the foundation for the rest of the portfolio.
 
 **Status: Completed**
 
-The second project will build directly on Project 1.
+This project builds directly on Project 1 — Network Diagnostic Tool.
 
-Project 1 creates a diagnostic log.
+While Project 1 generates network diagnostic logs, Project 2 analyses those logs and turns the raw information into a structured device health report.
 
-Project 2 will analyse that log.
+I developed a Python application that processes 44 sample log entries and:
 
-The idea is to build a Python tool capable of reading log files, identifying important events and turning raw log information into something easier to understand.
+- Parses log entries into structured data.
+- Counts INFO, WARNING, ERROR, CRITICAL and UNKNOWN messages.
+- Identifies device availability events, including UP and DOWN states.
+- Extracts ping results, packet loss, average latency and return codes.
+- Combines device events with their corresponding diagnostic results.
+- Classifies device health using thresholds defined for this learning project.
+- Exports the results to a CSV report.
+- Handles malformed log entries, missing files and unavailable latency values.
+- Includes 12 unit tests using Python's built-in `unittest` framework.
 
-I want it to be able to identify things such as:
+One important improvement was handling missing latency measurements correctly. When a ping fails and latency is unavailable, the CSV report displays `N/A` rather than a blank value, while the original analysis data retains Python's `None` value.
 
-- INFO messages
-- WARNING messages
-- ERROR messages
-- CRITICAL messages
-- affected devices
-- repeated problems
-- event counts
-- useful summaries
+This project helped me strengthen my skills in file processing, regular expressions, dictionaries, data transformation, error handling, CSV reporting, automated testing and Git version control.
 
-This project will help me develop stronger skills in:
+It also reinforced an important development habit: test the application, investigate unexpected behaviour, fix the underlying problem and verify the solution.
 
-- File processing
-- Text parsing
-- Regular expressions
-- String manipulation
-- Data transformation
-- Dictionaries
-- Filtering
-- Aggregation
-- Report generation
-
-The important connection is that Project 2 will consume information produced by Project 1.
+**Project documentation:** [Project 2 — Log Analyzer](project-02-log-analyzer/README.md)
 
 ---
 
